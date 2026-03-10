@@ -1,0 +1,18 @@
+name: GitHub Workflow Name
+on: 
+ push:
+  branches: [ main ]
+jobs:
+ firstJob:
+  runs-on: ubuntu-latest
+  steps:
+   - name: CheckOut Repository
+     uses: actions/checkout@v6.0.2
+   - name: SetUp NodeJs
+     uses:  actions/setup-node@v6.3.0
+     with: 
+      node-version: v22
+   - name: Install Dependencies
+     run: npm install
+   - name: CICD Pipeline Run
+     run: echo "CICD Pipeline Working."
