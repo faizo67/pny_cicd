@@ -1,18 +1,48 @@
-name: GitHub Workflow Name
-on: 
- push:
-  branches: [ main ]
+name: Deploy Node.js App to EC2
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
- firstJob:
-  runs-on: ubuntu-latest
-  steps:
-   - name: CheckOut Repository
-     uses: actions/checkout@v6.0.2
-   - name: SetUp NodeJs
-     uses:  actions/setup-node@v6.3.0
-     with: 
-      node-version: v22
-   - name: Install Dependencies
-     run: npm install
-   - name: CICD Pipeline Run
-     run: echo "CICD Pipeline Working."
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build App (optional)
+        run: npm run build --if-present
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            echo "Starting deployment..."
+            cd ~/Cicd
+            git pull origin main
+            npm install
+
+            if pm2 list | grep -q "app"; then
+              echo "App exists, restarting..."
+              pm2 restart app
+            else
+              echo "App not found, starting..."
+              pm2 start app.js --name app
+            fi
+
+            pm2 save
